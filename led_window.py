@@ -42,8 +42,11 @@ class LEDTestFrame(Tk.Tk):
 
         # Determine width of a light for max of 50 LEDs per line
         sw = self.winfo_screenwidth()
+        # Use 3/4 of screen for 50 pixels wide
         w = int((sw * 0.75) / 50)
-        h = 30
+        # Diameter of a pixel (aka height of a pixel)
+        # h = 30
+        h = w + 3
 
         # This is the polling time
         self.polling_interval__ms = polling_interval_ms
@@ -51,14 +54,18 @@ class LEDTestFrame(Tk.Tk):
         # main frame grid row tracker
         main_gr = 0
 
+        # How many rows of 50 pixels do we need?
         nrows = int((self.num_pixels - 1) / max_row_size) + 1
-        self.canvas = Tk.Canvas(self, height=h * 2 * nrows, width=max_row_size * w, bd=1, relief="solid")
+
+        # Height of canvas accounts for border of 1 px
+        self.canvas = Tk.Canvas(self, height=(h * nrows) + 4, width=(max_row_size * w) + 4, bd=1, relief="solid")
         self.canvas.grid(row=main_gr, column=0)
 
         self.lights = []
         # Top and bottom
-        y0 = (80 - h) / 2 + 2
-        y1 = y0 + w - 2
+        # Top is offset from border
+        y0 = 6
+        y1 = y0 + h - 8
         npx = self.num_pixels
         while npx > 0:
             if npx >= 50:
@@ -69,7 +76,7 @@ class LEDTestFrame(Tk.Tk):
                 # n circles across
                 # oval(x0, y0, x1, y1)
                 # Left and right
-                x0 = (w * i) + 3
+                x0 = (w * i) + 6
                 x1 = x0 + w - 3
                 # http://infohost.nmt.edu/tcc/help/pubs/tkinter/web/create_oval.html
                 self.lights.append(self.canvas.create_oval(x0, y0, x1, y1))
@@ -89,16 +96,18 @@ class LEDTestFrame(Tk.Tk):
         metrics_gr = 0
 
         # Metrics
-        self.speed_wait = Tk.Label(self.metrics_frame)
+        self.fixed_font = tkFont.Font(family="Courier New", size=14, weight=tkFont.NORMAL)
+
+        self.speed_wait = Tk.Label(self.metrics_frame, font=self.fixed_font)
         self.speed_wait.grid(row=metrics_gr, column=0)
         self.speed_wait["text"] = "Polling Interval: " + str(self.polling_interval__ms) + "ms"
 
-        self.frame_pixels = Tk.Label(self.metrics_frame)
+        self.frame_pixels = Tk.Label(self.metrics_frame, font=self.fixed_font)
         self.frame_pixels.grid(row=metrics_gr, column=1)
         self.frame_pixels["text"] = "Number pixels: " + str(self.num_pixels)
 
         self.frame_count = 0
-        self.frame_count_w = Tk.Label(self.metrics_frame)
+        self.frame_count_w = Tk.Label(self.metrics_frame, font=self.fixed_font)
         self.frame_count_w.grid(row=metrics_gr, column=2)
         self.frame_count_w["text"] = "Frame count: " + str(self.frame_count)
 
