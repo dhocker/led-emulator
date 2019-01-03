@@ -24,93 +24,88 @@ else:
 from led_connection_handler import LEDConnectionHandler
 
 class LEDTestFrame(Tk.Tk):
-    def __init__(self, num_pixels, polling_interval_ms=20):
+    def __init__(self, num_pixels, polling_interval_ms=20, frame_size=0):
         """
         Constructor
         :param num_pixels: Number of pixels in LED string
         :param polling_interval: Polling time in ms.
         """
         super(LEDTestFrame, self).__init__()
-        self.title("Color Cycler Test")
+        self.title("LED Emulator")
         self.num_pixels = num_pixels
 
-        # Determine width of a light
+        # Largest row size, max 50 LEDs per line
+        if self.num_pixels < 50:
+            max_row_size = self.num_pixels
+        else:
+            max_row_size = 50
+
+        # Determine width of a light for max of 50 LEDs per line
         sw = self.winfo_screenwidth()
-        w = int((sw - 500) / num_pixels)
+        w = int((sw * 0.75) / 50)
         h = 30
-        # w = 30
 
         # This is the polling time
-        self.wait_ms = polling_interval_ms
+        self.polling_interval__ms = polling_interval_ms
 
-        gr = 0
+        # main frame grid row tracker
+        main_gr = 0
 
-        # The color box
-        # self.f = Tk.Frame(self, height=80, width=800)
-        self.f = Tk.Frame(self, height=h + w + 5, width=(num_pixels * w))
-        self.f.grid(row=gr, column=0)
-
-        # Speed/wait
-        self.speed_wait = Tk.Label(self, width=10)
-        self.speed_wait.grid(row=gr, column=1)
-        self.speed_wait["text"] = str(self.wait_ms) + "ms"
-
-        # The color value
-        self.c = Tk.Label(self, width=10)
-        self.c.grid(row=gr, column=3)
-
-        gr += 1
-
-        self.canvas = Tk.Canvas(self, height=h * 2, width=self.num_pixels * w)
-        self.canvas.grid(row=gr, column=0)
+        nrows = int((self.num_pixels - 1) / max_row_size) + 1
+        self.canvas = Tk.Canvas(self, height=h * 2 * nrows, width=max_row_size * w, bd=1, relief="solid")
+        self.canvas.grid(row=main_gr, column=0)
 
         self.lights = []
+        # Top and bottom
         y0 = (80 - h) / 2 + 2
         y1 = y0 + w - 2
-        for i in range(self.num_pixels):
-            # n circles across
-            # oval(x0, y0, x1, y1)
-            x0 = (w * i) + 3
-            x1 = x0 + w - 3
-            # http://infohost.nmt.edu/tcc/help/pubs/tkinter/web/create_oval.html
-            self.lights.append(self.canvas.create_oval(x0, y0, x1, y1))
+        npx = self.num_pixels
+        while npx > 0:
+            if npx >= 50:
+                row_size = 50
+            else:
+                row_size = npx
+            for i in range(row_size):
+                # n circles across
+                # oval(x0, y0, x1, y1)
+                # Left and right
+                x0 = (w * i) + 3
+                x1 = x0 + w - 3
+                # http://infohost.nmt.edu/tcc/help/pubs/tkinter/web/create_oval.html
+                self.lights.append(self.canvas.create_oval(x0, y0, x1, y1))
 
-        gr += 1
+            # Set up for next row
+            y0 += h
+            y1 += h
+            npx -= 50
 
-        # Slower/Faster buttons
-        self.slower_botton = Tk.Button(self, text="Slower", width=6, command=self.run_slower)
-        self.slower_botton.grid(row=gr, column=1)
-        self.faster_botton = Tk.Button(self, text="Faster", width=6, command=self.run_faster)
-        self.faster_botton.grid(row=gr, column=2)
+        main_gr += 1
 
-        # Run/Pause button
-        self.rb = Tk.Button(self, text="Pause", width=6, command=self.run_pause)
-        self.rb.grid(row=gr, column=3)
+        # Metrics frame
+        self.metrics_frame = Tk.Frame(self, height=h + w + 5, width=(self.num_pixels * w))
+        self.metrics_frame.grid(row=main_gr, column=0)
+
+        # Metrics frame grid row tracker
+        metrics_gr = 0
+
+        # Metrics
+        self.speed_wait = Tk.Label(self.metrics_frame)
+        self.speed_wait.grid(row=metrics_gr, column=0)
+        self.speed_wait["text"] = "Polling Interval: " + str(self.polling_interval__ms) + "ms"
+
+        self.frame_pixels = Tk.Label(self.metrics_frame)
+        self.frame_pixels.grid(row=metrics_gr, column=1)
+        self.frame_pixels["text"] = "Number pixels: " + str(self.num_pixels)
+
+        main_gr += 1
+
         # Quit button
         self.q = Tk.Button(self, text="Quit", width=4, command=self.destroy)
-        self.q.grid(row=gr, column=4)
+        self.q.grid(row=main_gr, column=0)
 
         # Prime the color and timer event
         self.run = True
         self.next_frame()
-
-    def run_slower(self):
-        self.wait_ms += 50
-        self.speed_wait["text"] = str(self.wait_ms)
-
-    def run_faster(self):
-        if self.wait_ms > 50:
-            self.wait_ms -= 50
-        self.speed_wait["text"] = str(self.wait_ms)
-
-    def run_pause(self):
-        if self.run:
-            self.run = False
-            self.rb["text"] = "Run"
-        else:
-            self.run = True
-            self.rb["text"] = "Pause"
-            self.next_frame()
 
     def next_frame(self):
         """
@@ -122,10 +117,6 @@ class LEDTestFrame(Tk.Tk):
         while frame:
             tkcolor = "#%02x%02x%02x" % (frame[0][1], frame[0][2], frame[0][3])
 
-            # Update all widgets with this color
-            self.c["text"] = tkcolor.upper()
-            self.f.config(bg=tkcolor)
-
             for i in range(len(self.lights)):
                 p = (frame[i][1], frame[i][2], frame[i][3])
                 self.canvas.itemconfigure(self.lights[i], fill="#%02x%02x%02x" % p)
@@ -134,9 +125,9 @@ class LEDTestFrame(Tk.Tk):
             frame = LEDConnectionHandler.get_frame()
 
         if self.run:
-            self.f.after(self.wait_ms, self.next_frame)
+            self.after(self.polling_interval__ms, self.next_frame)
 
-def run_led_window():
-    test_frame = LEDTestFrame(50)
+def run_led_window(num_pixels):
+    test_frame = LEDTestFrame(num_pixels)
     test_frame.mainloop()
     print("LED window closed")
