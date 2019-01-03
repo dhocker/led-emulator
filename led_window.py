@@ -97,6 +97,11 @@ class LEDTestFrame(Tk.Tk):
         self.frame_pixels.grid(row=metrics_gr, column=1)
         self.frame_pixels["text"] = "Number pixels: " + str(self.num_pixels)
 
+        self.frame_count = 0
+        self.frame_count_w = Tk.Label(self.metrics_frame)
+        self.frame_count_w.grid(row=metrics_gr, column=2)
+        self.frame_count_w["text"] = "Frame count: " + str(self.frame_count)
+
         main_gr += 1
 
         # Quit button
@@ -115,8 +120,8 @@ class LEDTestFrame(Tk.Tk):
         # Here's where we need to get the next data frame
         frame = LEDConnectionHandler.get_frame()
         while frame:
-            tkcolor = "#%02x%02x%02x" % (frame[0][1], frame[0][2], frame[0][3])
-
+            self.frame_count += 1
+            self.frame_count_w["text"] = "Frame count: " + str(self.frame_count)
             for i in range(len(self.lights)):
                 p = (frame[i][1], frame[i][2], frame[i][3])
                 self.canvas.itemconfigure(self.lights[i], fill="#%02x%02x%02x" % p)
