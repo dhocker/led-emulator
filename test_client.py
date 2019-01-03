@@ -18,6 +18,7 @@
 import socket
 import time
 from struct import pack
+from configuration import Configuration
 
 def main():
     """
@@ -25,7 +26,7 @@ def main():
     and sends it a number of LED data frames.
     :return: Nothing
     """
-    num_pixels = 150
+    num_pixels = Configuration.num_pixels()
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         print("Connecting...")
@@ -73,4 +74,5 @@ def block_send(sock, block):
 # Run as an application
 #
 if __name__ == "__main__":
+    Configuration.load_configuration()
     main()
