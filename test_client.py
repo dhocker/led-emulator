@@ -17,6 +17,7 @@
 
 import socket
 import time
+from struct import pack
 
 def main():
     """
@@ -24,7 +25,7 @@ def main():
     and sends it a number of LED data frames.
     :return: Nothing
     """
-    num_pixels = 50
+    num_pixels = 150
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         print("Connecting...")
@@ -55,9 +56,15 @@ def main():
         sock.close()
 
 def frame_send(sock, frame):
+    block_send(sock, len(frame))
+    block_send(sock, frame)
+
+def block_send(sock, block):
     total_sent = 0
-    while total_sent < len(frame):
-        sent = sock.send(frame[total_sent:])
+    if isinstance(block, int):
+        block = pack('!i', block)
+    while total_sent < len(block):
+        sent = sock.send(block[total_sent:])
         if sent == 0:
             raise RuntimeError("socket connection broken")
         total_sent = total_sent + sent

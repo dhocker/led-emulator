@@ -108,7 +108,7 @@ def main():
         server.Start()
 
         terminate_service = False
-        run_led_window()
+        run_led_window(Configuration.num_pixels())
     except KeyboardInterrupt:
         logger.info("LEDEmulator shutting down...")
     except Exception as e:

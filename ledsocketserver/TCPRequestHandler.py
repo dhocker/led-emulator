@@ -16,6 +16,7 @@ try:
     import socketserver as socketserver
 except ImportError:
     import SocketServer as socketserver
+from struct import unpack
 
 
 class TCPRequestHandler(socketserver.BaseRequestHandler):
@@ -97,8 +98,36 @@ class TCPRequestHandler(socketserver.BaseRequestHandler):
         :return: Returns a list of bytes or None
         """
         # This is essentially APA102 format.
+        # client_frame_size followed by
         # 4 bytes all zeroes header + 4 bytes per pixel * pixels + 4 bytes all ones trailer
-        count = TCPRequestHandler.frame_size
+        client_frame_size = self.receive(4)
+        if not client_frame_size:
+            print("Unable to read client frame size")
+            return None
+        # Note that the result of unpack is a tuple with one value
+        client_frame_size = unpack('!i', client_frame_size)[0]
+        if client_frame_size != TCPRequestHandler.frame_size:
+            print("Client frame size does not match configured number of pixels")
+            return None
+
+        led_data = self.receive(TCPRequestHandler.frame_size)
+        if not led_data:
+            print("Failed to receive complete frame")
+            return None
+
+        # It is likely that some sort of data conversion will be required.
+        # For now we'll coerce the frame into a list of bytes (which
+        # should be the format it is already in)
+        led_data = bytes(led_data)
+        return led_data
+
+    def receive(self, block_size):
+        """
+        Read a given number of bytes from stream
+        :param block_size:
+        :return:
+        """
+        count = block_size
         led_data = b''
         # Read exactly "count" bytes
         while count:

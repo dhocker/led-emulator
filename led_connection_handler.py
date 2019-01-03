@@ -61,8 +61,7 @@ class LEDConnectionHandler:
         :param led_data: The LED data sent by the client.
         :return: None
         """
-        print("Frame received")
-        # print(str(led_data))
+        # print("Frame received:", len(led_data))
         # Let's reformat the frame into something that the LED window can readily use
         pixels = []
         for fx in range(self.frame_start, self.frame_end, self.frame_pixel_size):
