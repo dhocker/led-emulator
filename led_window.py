@@ -118,7 +118,6 @@ class LEDTestFrame(Tk.Tk):
         self.q.grid(row=main_gr, column=0)
 
         # Prime the color and timer event
-        self.run = True
         self.next_frame()
 
     def next_frame(self):
@@ -138,8 +137,8 @@ class LEDTestFrame(Tk.Tk):
             # Check for another LED data frame
             frame = LEDConnectionHandler.get_frame()
 
-        if self.run:
-            self.after(self.polling_interval__ms, self.next_frame)
+        # Scehdule next polling cycle
+        self.after(self.polling_interval__ms, self.next_frame)
 
 def run_led_window(num_pixels):
     test_frame = LEDTestFrame(num_pixels)
